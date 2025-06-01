@@ -1,2 +1,3 @@
 # whatsapp-api-grupos
-API com integração ao WhatsApp para automações do ClickUp via n8n
+
+API para integração com WhatsApp e leitura de IDs de grupos para uso no n8n.

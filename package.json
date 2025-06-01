@@ -1,0 +1,14 @@
+{
+  "name": "whatsapp-api-grupos",
+  "version": "1.0.0",
+  "description": "API para integração com grupos de WhatsApp via n8n",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "whatsapp-web.js": "^1.21.1",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
