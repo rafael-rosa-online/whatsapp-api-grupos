@@ -1,3 +1,5 @@
-# whatsapp-api-grupos
+# API para buscar IDs de Grupos do WhatsApp
 
-API para integração com WhatsApp e leitura de IDs de grupos para uso no n8n.
+- Endpoint para gerar QR: `/instance/connect/:instanceName`
+- Verificar conexão: `/instance/status/:instanceName`
+- Buscar grupos: `/groups/:instanceName`
