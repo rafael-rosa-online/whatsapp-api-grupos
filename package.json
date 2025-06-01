@@ -1,6 +1,5 @@
-
 {
-  "name": "whatsapp-api-grupos-v3",
+  "name": "whatsapp-id-grupos",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
