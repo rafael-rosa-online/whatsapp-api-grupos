@@ -1,8 +1,7 @@
-# whatsapp-api-grupos
 
-API para buscar IDs de grupos do WhatsApp.
+# whatsapp-api-grupos-v3
 
-## Rotas disponíveis
-
-- `GET /instance/connect/:instanceName` → Gera QR Code nos logs
-- `GET /groups/:instanceName` → Lista os grupos com nome e ID
+API com integração ao WhatsApp para listar IDs de grupos.
+Rotas disponíveis:
+- GET `/instance/connect/:name`
+- GET `/groups/:name`

@@ -1,8 +1,9 @@
+
 const { Client } = require('whatsapp-web.js');
 const express = require('express');
 const qrcode = require('qrcode-terminal');
 const app = express();
-const port = process.env.PORT || 10000;
+const port = process.env.PORT || 3000;
 
 const instances = new Map();
 
@@ -12,7 +13,7 @@ app.get('/instance/connect/:name', (req, res) => {
         return res.json({ message: 'Instance already exists' });
     }
 
-    const client = new Client({ puppeteer: { headless: true, args: ["--no-sandbox"] } });
+    const client = new Client({ puppeteer: { headless: true } });
 
     client.on('qr', qr => {
         qrcode.generate(qr, { small: true });
@@ -20,21 +21,28 @@ app.get('/instance/connect/:name', (req, res) => {
     });
 
     client.on('ready', () => {
-        console.log(`Client ${name} is ready`);
+        console.log(`Client ${name} is ready!`);
+        client.isConnected = true;
     });
 
     client.initialize();
     instances.set(name, client);
 
-    res.json({ message: 'QR Code generated in logs' });
+    return res.json({ message: 'QR Code generated in logs' });
 });
 
 app.get('/groups/:name', async (req, res) => {
     const name = req.params.name;
     const client = instances.get(name);
-    if (!client) return res.status(404).json({ error: true, message: 'Instance not found' });
+    if (!client) {
+        return res.status(404).json({ error: true, message: 'Instance not found' });
+    }
 
     try {
+        if (!client.isConnected) {
+            return res.status(400).json({ error: true, message: 'Client not yet connected' });
+        }
+
         const chats = await client.getChats();
         const groups = chats
             .filter(chat => chat.isGroup)
