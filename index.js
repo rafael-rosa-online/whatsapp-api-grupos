@@ -1,71 +1,50 @@
+const { Client } = require('whatsapp-web.js');
 const express = require('express');
-const { create } = require('@open-wa/wa-automate');
-const cors = require('cors');
-
+const qrcode = require('qrcode-terminal');
 const app = express();
-app.use(cors());
-app.use(express.json());
+const port = process.env.PORT || 3000;
 
-const PORT = process.env.PORT || 3000;
-const sessions = new Map();
+const instances = new Map();
 
-// Criar nova instância
-app.get('/instance/connect/:instance', async (req, res) => {
-  const name = req.params.instance;
+app.get('/instance/connect/:name', (req, res) => {
+    const name = req.params.name;
+    if (instances.has(name)) {
+        return res.json({ message: 'Instance already created' });
+    }
 
-  if (sessions.has(name)) {
-    return res.json({ message: 'Já conectado', instance: name });
-  }
+    const client = new Client({ puppeteer: { headless: true } });
 
-  try {
-    const client = await create({
-      sessionId: name,
-      multiDevice: true,
-      qrTimeout: 0,
-      headless: true,
-      authTimeout: 60,
-      cacheEnabled: false,
-      useChrome: false
+    client.on('qr', qr => {
+        qrcode.generate(qr, { small: true });
+        console.log(`QR for ${name}:`, qr);
     });
 
-    sessions.set(name, client);
-
-    client.onStateChanged((state) => {
-      if (['CONFLICT', 'UNLAUNCHED'].includes(state)) client.forceRefocus();
+    client.on('ready', () => {
+        console.log(`Client ${name} is ready!`);
     });
 
-    res.json({ message: 'Instância criada', instance: name });
-  } catch (err) {
-    res.status(500).json({ error: true, message: err.message });
-  }
+    client.initialize();
+    instances.set(name, client);
+
+    return res.json({ message: 'QR Code generated in logs' });
 });
 
-// Buscar grupos
-app.get('/groups/:instance', async (req, res) => {
-  const name = req.params.instance;
-  const client = sessions.get(name);
+app.get('/groups/:name', async (req, res) => {
+    const name = req.params.name;
+    const client = instances.get(name);
+    if (!client) return res.status(404).json({ error: true, message: 'Instance not found' });
 
-  if (!client) return res.status(404).json({ error: 'Instância não encontrada' });
-
-  try {
-    const chats = await client.getAllChats();
-    const groups = chats.filter(c => c.isGroup).map(g => ({
-      name: g.name,
-      id: g.id._serialized
-    }));
-
-    res.json({ instance: name, groups });
-  } catch (err) {
-    res.status(500).json({ error: true, message: err.message });
-  }
+    try {
+        const chats = await client.getChats();
+        const groups = chats
+            .filter(chat => chat.isGroup)
+            .map(chat => ({ name: chat.name, id: chat.id._serialized }));
+        return res.json(groups);
+    } catch (err) {
+        return res.status(500).json({ error: true, message: err.message });
+    }
 });
 
-// Status
-app.get('/instance/status/:instance', (req, res) => {
-  const name = req.params.instance;
-  res.json({ connected: sessions.has(name) });
-});
-
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+app.listen(port, () => {
+    console.log(`API running on port ${port}`);
 });

@@ -1,14 +1,13 @@
 {
-  "name": "whatsapp-api-grupos",
+  "name": "whatsapp-id-grupos",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@open-wa/wa-automate": "^4.36.6",
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.22.1"
   }
 }
