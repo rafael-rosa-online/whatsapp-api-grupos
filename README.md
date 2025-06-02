@@ -1,8 +1,8 @@
-# whatsapp-id-grupos
+# whatsapp-api-grupos
 
-API para integração ao WhatsApp para listar IDs de grupos. Útil para automações com ClickUp e n8n.
+API com integração ao WhatsApp para listar IDs de grupos. Útil para automações com ClickUp e n8n.
 
 ## Rotas disponíveis
 
-- Gerar QR Code: `/instance/connect/:instanceName`
+- Gerar QR code: `/instance/connect/:instanceName`
 - Listar grupos: `/groups/:instanceName`
