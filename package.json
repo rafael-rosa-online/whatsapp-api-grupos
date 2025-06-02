@@ -1,13 +1,15 @@
 {
-  "name": "whatsapp-id-grupos",
+  "name": "whatsapp-api-grupos",
   "version": "1.0.0",
+  "description": "API para integração com WhatsApp e listagem de grupos",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.23.0"
+    "qrcode": "^1.5.3",
+    "whatsapp-web.js": "^1.21.1",
+    "cors": "^2.8.5"
   }
 }

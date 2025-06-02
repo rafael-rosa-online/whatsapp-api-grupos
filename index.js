@@ -1,60 +1,65 @@
 const express = require('express');
-const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
-const app = express();
-const PORT = process.env.PORT || 10000;
+const { Client } = require('whatsapp-web.js');
+const qrcode = require('qrcode');
+const cors = require('cors');
 
+const app = express();
+app.use(cors());
+const port = process.env.PORT || 3000;
 const instances = new Map();
 
-app.get('/instance/connect/:instanceName', async (req, res) => {
-  const { instanceName } = req.params;
-
-  if (instances.has(instanceName)) {
-    return res.json({ message: 'Instance already exists' });
-  }
-
-  const client = new Client({
-    authStrategy: new LocalAuth({ clientId: instanceName }),
-    puppeteer: {
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    },
-  });
-
-  client.on('qr', qr => {
-    console.log(`QR for ${instanceName}:`);
-    qrcode.generate(qr, { small: true });
-  });
-
-  client.on('ready', () => {
-    console.log(`Client ${instanceName} is ready!`);
-  });
-
-  client.initialize();
-  instances.set(instanceName, client);
-
-  return res.json({ message: 'QR Code generated in logs' });
+app.get('/', (req, res) => {
+    res.send('API WhatsApp está no ar.');
 });
 
-app.get('/groups/:instanceName', async (req, res) => {
-  const { instanceName } = req.params;
-  const client = instances.get(instanceName);
+app.get('/instance/connect/:name', async (req, res) => {
+    const name = req.params.name;
+    if (instances.has(name)) {
+        return res.send(`<h3>Instância "${name}" já foi criada. Escaneie com o WhatsApp!</h3>`);
+    }
 
-  if (!client) {
-    return res.status(404).json({ error: true, message: 'Instance not found' });
-  }
+    const client = new Client({
+        puppeteer: { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }
+    });
 
-  try {
-    const chats = await client.getChats();
-    const groups = chats
-      .filter(chat => chat.isGroup)
-      .map(chat => ({ name: chat.name, id: chat.id._serialized }));
+    let qrHtml = "<h3>Aguardando QR Code...</h3>";
 
-    return res.json(groups);
-  } catch (err) {
-    return res.status(500).json({ error: true, message: err.message });
-  }
+    client.on('qr', async (qr) => {
+        const qrImage = await qrcode.toDataURL(qr);
+        qrHtml = \`
+            <h3>Escaneie o QR Code com seu WhatsApp</h3>
+            <img src="\${qrImage}" />
+        \`;
+    });
+
+    client.on('ready', () => {
+        console.log(\`Cliente \${name} conectado.\`);
+    });
+
+    client.initialize();
+    instances.set(name, client);
+
+    setTimeout(() => {
+        res.send(qrHtml);
+    }, 3000);
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ API ready at http://localhost:${PORT}`);
+app.get('/groups/:name', async (req, res) => {
+    const name = req.params.name;
+    const client = instances.get(name);
+    if (!client) return res.status(404).json({ error: true, message: 'Instância não encontrada' });
+
+    try {
+        const chats = await client.getChats();
+        const groups = chats
+            .filter(chat => chat.isGroup)
+            .map(chat => ({ name: chat.name, id: chat.id._serialized }));
+        return res.json(groups);
+    } catch (err) {
+        return res.status(500).json({ error: true, message: err.message });
+    }
+});
+
+app.listen(port, () => {
+    console.log(\`🚀 Servidor rodando na porta \${port}\`);
 });
