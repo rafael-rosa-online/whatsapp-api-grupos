@@ -1,47 +1,55 @@
-const express = require('express');
-const qrcode = require('qrcode-terminal');
-const { Client } = require('whatsapp-web.js');
 
+const express = require('express');
+const { Client } = require('whatsapp-web.js');
+const qrcode = require('qrcode');
 const app = express();
-const port = process.env.PORT || 10000;
+const port = process.env.PORT || 3000;
 
 const instances = new Map();
 
-app.get('/instance/connect/:instanceName', (req, res) => {
-    const name = req.params.instanceName;
-
+app.get('/instance/connect/:name', async (req, res) => {
+    const name = req.params.name;
     if (instances.has(name)) {
-        return res.json({ message: 'Instance already exists' });
+        return res.send('<h2>Instância já criada. Vá para /groups/' + name + '</h2>');
     }
 
-    const client = new Client({ puppeteer: { headless: true } });
+    const client = new Client({
+        puppeteer: {
+            headless: true,
+            args: ['--no-sandbox']
+        }
+    });
 
-    client.on('qr', qr => {
-        qrcode.generate(qr, { small: true });
-        console.log(`QR Code for ${name}:`, qr);
+    client.on('qr', async qr => {
+        const qrImage = await qrcode.toDataURL(qr);
+        const html = \`
+            <h2>Escaneie o QR Code abaixo para conectar</h2>
+            <img src="\${qrImage}" />
+        \`;
+        res.send(html);
     });
 
     client.on('ready', () => {
-        console.log(`Client ${name} is ready!`);
+        console.log(`Cliente ${name} pronto.`);
     });
 
     client.initialize();
     instances.set(name, client);
-
-    res.json({ message: 'QR Code generated in logs' });
 });
 
-app.get('/groups/:instanceName', async (req, res) => {
-    const name = req.params.instanceName;
+app.get('/groups/:name', async (req, res) => {
+    const name = req.params.name;
     const client = instances.get(name);
 
-    if (!client) return res.status(404).json({ error: true, message: 'Instance not found' });
+    if (!client) {
+        return res.status(404).json({ error: true, message: 'Instância não encontrada' });
+    }
 
     try {
         const chats = await client.getChats();
-        const groups = chats.filter(chat => chat.isGroup).map(chat => ({
-            name: chat.name,
-            id: chat.id._serialized
+        const groups = chats.filter(c => c.isGroup).map(c => ({
+            name: c.name,
+            id: c.id._serialized
         }));
         res.json(groups);
     } catch (err) {
@@ -50,5 +58,5 @@ app.get('/groups/:instanceName', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`API ready at http://localhost:${port}`);
+    console.log(`API rodando na porta ${port}`);
 });

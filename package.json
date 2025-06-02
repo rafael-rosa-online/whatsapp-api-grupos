@@ -1,3 +1,4 @@
+
 {
   "name": "whatsapp-api-grupos",
   "version": "1.0.0",
@@ -7,7 +8,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "qrcode-terminal": "^0.12.0",
+    "qrcode": "^1.5.1",
     "whatsapp-web.js": "^1.21.1"
   }
 }
